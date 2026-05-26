@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataMol</title>
+  <link rel="stylesheet" href="index.css" />
+  <link rel="stylesheet" href="componentes.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">DM</div>
+          <div class="brand-text">
+            <h1>DataMol</h1>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a class="menu-item active" href="#">Dashboard</a>
+          <a class="menu-item" href="#">Moléculas</a>
+          <a class="menu-item" href="#">Visualização 2D</a>
+          <a class="menu-item" href="#">Filtros</a>
+          <a class="menu-item" href="#">Relatórios</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>Projeto Aplicado 2</p>
+        <span>Base CSV conectada</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+          <input id="searchInput" type="text" placeholder="Buscar molécula, fórmula, ID, fonte ou amostra..." />
+        </div>
+
+        <div class="topbar-actions">
+          <select id="dataSourceSelect" class="source-select" aria-label="Selecionar arquivo CSV">
+            <option value="../codigoPlanilhas/final_integrado_com_hmdb.csv">final_integrado_com_hmdb.csv</option>
+          </select>
+          <button id="reloadData" class="btn btn-outline">Atualizar CSV</button>
+          <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema">☾</button>
+        </div>
+      </header>
+
+      <section class="page-header">
+        <div>
+          <h2>Moléculas</h2>
+          <p id="dataSourceStatus">Carregando base molecular...</p>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card stat-green">
+          <div class="stat-icon">Σ</div>
+          <div class="stat-content">
+            <span>Total de registros</span>
+            <strong id="statTotal">0</strong>
+            <small id="statTotalDelta">CSV</small>
+          </div>
+        </article>
+
+        <article class="stat-card stat-blue">
+          <div class="stat-icon">ƒ</div>
+          <div class="stat-content">
+            <span>Fórmulas únicas</span>
+            <strong id="statUnique">0</strong>
+            <small id="statUniqueDelta">Base normalizada</small>
+          </div>
+        </article>
+
+        <article class="stat-card stat-green">
+          <div class="stat-icon">★</div>
+          <div class="stat-content">
+            <span>Favoritos</span>
+            <strong id="statFavorites">0</strong>
+            <small id="statFavoritesDelta">Sessão local</small>
+          </div>
+        </article>
+
+        <article class="stat-card stat-blue">
+          <div class="stat-icon">%</div>
+          <div class="stat-content">
+            <span>Score médio</span>
+            <strong id="statRefs">0</strong>
+            <small id="statRefsDelta">A partir do CSV</small>
+          </div>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <div class="content-left">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Lista de Moléculas</h3>
+                <span id="resultCount" class="muted">0 registros</span>
+              </div>
+
+              <div class="panel-actions">
+                <button id="filterQuickBtn" class="btn btn-ghost">Filtros</button>
+                <button id="exportBtn" class="btn btn-outline">Exportar</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nome / descrição</th>
+                    <th>Fórmula</th>
+                    <th>Peso estimado</th>
+                    <th>Score</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="pagination">
+              <span id="paginationInfo" class="muted">Mostrando 0 resultados</span>
+              <div class="pagination-controls">
+                <button id="prevPage" class="page-btn" aria-label="Página anterior">‹</button>
+                <div id="pageNumbers" class="page-numbers"></div>
+                <button id="nextPage" class="page-btn" aria-label="Próxima página">›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-right">
+          <div class="panel viz-panel">
+            <div class="panel-header">
+              <h3>Visualização 2D</h3>
+              <a id="pubchemLink" class="pubchem-link" href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noreferrer">PubChem</a>
+            </div>
+
+            <div class="molecule-view">
+              <div class="molecule-2d" id="molecule2d">
+                <img id="moleculeImage" alt="Estrutura 2D da molécula selecionada" hidden />
+                <div id="moleculePlaceholder" class="molecule-placeholder">
+                  Selecione uma molécula para carregar a estrutura 2D pelo PubChem.
+                </div>
+              </div>
+            </div>
+
+            <div class="selected-card">
+              <h4 id="selectedName">Selecione uma molécula</h4>
+              <p id="selectedInfo">Clique em visualizar na tabela para ver detalhes da molécula.</p>
+              <p id="selectedMeta" class="selected-meta"></p>
+            </div>
+          </div>
+
+          <div class="panel filter-panel">
+            <div class="panel-header">
+              <h3>Filtros Gerais</h3>
+              <button id="clearFilters" class="link-btn">Limpar filtros</button>
+            </div>
+
+            <div class="filter-grid">
+              <label>
+                <span>Fonte</span>
+                <select id="categoryFilter">
+                  <option value="">Todas</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Amostra / grupo</span>
+                <select id="subCategoryFilter">
+                  <option value="">Todas</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Peso Molecular estimado (g/mol)</span>
+                <div class="range-row">
+                  <input id="minWeight" type="number" placeholder="Mínimo" />
+                  <span>—</span>
+                  <input id="maxWeight" type="number" placeholder="Máximo" />
+                </div>
+              </label>
+
+              <label>
+                <span>Fórmula</span>
+                <input id="formulaFilter" type="text" placeholder="Ex: C30H22N4O4" />
+              </label>
+            </div>
+
+            <button id="applyFilters" class="btn btn-primary full">Aplicar Filtros</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>DataMol &copy; 2026 · Projeto Aplicado 2</span>
+        <span>Fonte: ProjetoAplicado2_CDIA_UniSenai</span>
+      </footer>
+    </main>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
