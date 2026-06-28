@@ -1,0 +1,14 @@
+# Processamento de Dados (codigoPlanilhas)
+pandas
+openpyxl
+
+# Comunicação e APIs
+requests
+chembl_webresource_client
+
+# Banco de Dados (criarBanco)
+psycopg2-binary
+
+# Jupyter Notebook (para rodar o ist.ipynb localmente)
+notebook
+ipykernel

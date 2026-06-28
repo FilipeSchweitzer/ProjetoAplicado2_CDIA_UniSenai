@@ -15,7 +15,9 @@
     <aside class="sidebar">
       <div>
         <div class="brand">
-          <div class="brand-icon">DM</div>
+          <div class="brand-icon" style="width:48px;height:48px;background:transparent;border-radius:14px;padding:0;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;">
+            <img src="datamol-icon.png" alt="Ícone DataMol" style="width:100%;height:100%;object-fit:contain;display:block;" />
+          </div>
           <div class="brand-text">
             <h1>DataMol</h1>
           </div>
@@ -44,8 +46,9 @@
         </div>
 
         <div class="topbar-actions">
-          <select id="dataSourceSelect" class="source-select" aria-label="Selecionar arquivo CSV">
+          <select id="dataSourceSelect" class="source-select" aria-label="Selecionar fonte de dados">
             <option value="../codigoPlanilhas/final_integrado_com_hmdb.csv">final_integrado_com_hmdb.csv</option>
+            <option value="__api__">PostgreSQL (API)</option>
           </select>
           <button id="reloadData" class="btn btn-outline">Atualizar CSV</button>
           <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema">☾</button>

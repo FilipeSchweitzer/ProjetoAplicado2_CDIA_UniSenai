@@ -1,14 +1,6 @@
 import psycopg2
 
-def get_connection():
-    # Substitua com as credenciais do seu banco de dados
-    return psycopg2.connect(
-        dbname="seu_banco",
-        user="seu_usuario",
-        password="sua_senha",
-        host="localhost",
-        port="5432"
-    )
+from db import get_connection
 
 def criar_esquema():
     comandos = [

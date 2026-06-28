@@ -1,6 +1,10 @@
+// Endereço da API Flask (criarBanco/api.py). Ajuste se rodar em outra porta/host.
+const API_BASE = "http://localhost:5000";
+const API_SOURCE = "__api__";
+
 const CSV_SOURCES = {
-  "..../codigoPlanilhas/final_integrado_com_hmdb.csv": "final_integrado_com_hmdb.csv",
-  "../ProjetoAplicado2_CDIA_UniSenai/table.csv": "table.csv",
+  "../codigoPlanilhas/final_integrado_com_hmdb.csv": "final_integrado_com_hmdb.csv",
+  [API_SOURCE]: "PostgreSQL (API)",
 };
 
 const ATOMIC_WEIGHTS = {
@@ -555,11 +559,18 @@ async function loadCSV(path = state.sourcePath) {
   setLoadingState(`Carregando ${CSV_SOURCES[path] || path}...`);
 
   try {
-    const response = await fetch(path, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const text = await response.text();
-    const rows = parseCSV(text);
+    let rows;
+    if (path === API_SOURCE) {
+      const response = await fetch(`${API_BASE}/api/molecules`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      rows = await response.json();
+      if (!Array.isArray(rows)) throw new Error("Resposta inesperada da API.");
+    } else {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const text = await response.text();
+      rows = parseCSV(text);
+    }
     molecules = rows.map(createMolecule).filter(mol => mol.name || mol.formula);
 
     populateFilters();
@@ -574,7 +585,7 @@ async function loadCSV(path = state.sourcePath) {
     els.tableBody.innerHTML = `
       <tr>
         <td colspan="6" class="empty-row">
-          Não foi possível carregar o CSV. Abra o dashboard por um servidor local para permitir fetch("../ProjetoAplicado2_CDIA_UniSenai/...").
+          Não foi possível carregar os dados. Para o CSV, sirva o projeto por um servidor local (ex.: python -m http.server). Para a API, rode criarBanco/api.py em ${API_BASE}.
         </td>
       </tr>
     `;

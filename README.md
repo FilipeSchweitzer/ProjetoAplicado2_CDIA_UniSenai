@@ -69,15 +69,47 @@ Entrar no repositório
   cd ProjetoAplicado2_CDIA_UniSenai
 ```
 
-Instalar dependências
+Instalar dependências do pipeline
 ```bash
   pip install pandas requests openpyxl chembl_webresource_client
 ```
 
-Start the server
+### Backend (PostgreSQL + API)
+
+Instalar dependências do backend
 ```bash
-  npm run start
+  pip install -r criarBanco/requirements.txt
 ```
+
+Configurar credenciais do banco (variáveis de ambiente — PowerShell)
+```powershell
+  $env:DATAMOL_DB_NAME = "datamol"
+  $env:DATAMOL_DB_USER = "postgres"
+  $env:DATAMOL_DB_PASSWORD = "sua_senha"
+  $env:DATAMOL_DB_HOST = "localhost"
+  $env:DATAMOL_DB_PORT = "5432"
+```
+
+Criar o esquema, as funções e popular o banco a partir do CSV
+```bash
+  python criarBanco/create_tables.py
+  python criarBanco/create_functions.py
+  python criarBanco/ingest_csv.py --truncate
+```
+
+Subir a API (http://localhost:5000)
+```bash
+  python criarBanco/api.py
+```
+
+### Frontend (dashboard estático)
+
+Servir o frontend por um servidor local (o fetch do CSV/API exige HTTP, não file://)
+```bash
+  python -m http.server 8765
+```
+Depois abra `http://localhost:8765/vizuPlanilhas/main.html`. No seletor de fonte
+escolha o CSV ou **PostgreSQL (API)** para consumir os dados do banco.
 
 
 ## Documentação
