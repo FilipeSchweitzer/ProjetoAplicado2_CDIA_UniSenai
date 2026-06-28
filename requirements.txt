@@ -12,3 +12,41 @@ psycopg2-binary
 # Jupyter Notebook (para rodar o ist.ipynb localmente)
 notebook
 ipykernel
+
+# Análise de Dados
+pandas
+numpy
+scikit-learn
+
+# Visualização de Dados
+matplotlib
+seaborn
+plotly
+
+# Machine Learning & AI
+tensorflow
+transformers
+nltk
+
+# Web Development & APIs
+flask
+flask-cors
+requests
+python-dotenv
+
+# Bioinformática & Genômica
+biopython
+sqlalchemy
+gffutils
+
+# Ferramentas de Desenvolvimento
+jupyter
+jupyterlab
+ipykernel
+
+# Banco de Dados
+psycopg2-binary
+
+# Processamento de Imagens
+opencv-python
+pillow

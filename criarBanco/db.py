@@ -11,9 +11,11 @@ Defina-as antes de rodar os scripts (ou crie um arquivo .env e exporte):
         $env:DATAMOL_DB_PORT = "5432"
 """
 import os
+from dotenv import load_dotenv
 
 import psycopg2
 
+load_dotenv()
 
 def get_connection():
     """Abre uma conexão com o banco usando as variáveis de ambiente."""
