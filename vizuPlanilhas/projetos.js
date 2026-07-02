@@ -39,7 +39,7 @@ function novoId() {
 }
 
 /* ---------------- CSV util (compartilhado em utils.js) ---------------- */
-const { cleanValue: limpar, escapeHTML, debounce, parseCSV } = window.DM;
+const { cleanValue: limpar, escapeHTML, debounce, parseCSV, showToast } = window.DM;
 
 function primeiro(row, chaves) {
   for (const k of chaves) { if (row[k] !== undefined && limpar(row[k])) return limpar(row[k]); }
@@ -304,6 +304,7 @@ function salvarNovoProjeto() {
   salvarProjetos();
   fecharModal();
   renderLista();
+  showToast(`Projeto "${titulo}" criado.`);
 }
 
 /* ---- Detalhe do projeto ---- */
@@ -357,6 +358,7 @@ function adicionarMolecula(m) {
   if (jaTem(p, norm)) return;
   p.moleculas.push(norm);
   salvarProjetos(); renderMoleculasProjeto();
+  showToast("Molécula adicionada ao projeto.");
 }
 
 /* ---- Abas add ---- */
@@ -420,6 +422,7 @@ async function processarArquivo(file) {
   salvarProjetos();
   renderMoleculasProjeto();
   el("progressLabel").textContent = "✓ " + adicionadas + " molécula(s) adicionada(s) ao projeto.";
+  showToast(adicionadas + " molécula(s) adicionada(s) via CSV.");
   setTimeout(() => el("progressWrap").classList.add("hidden"), 4000);
 }
 

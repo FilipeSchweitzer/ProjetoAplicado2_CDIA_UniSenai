@@ -224,6 +224,39 @@ body.dark .skeleton::after {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---------- Toasts ---------- */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  box-shadow: var(--shadow), 0 8px 24px rgba(17, 24, 39, 0.08);
+  animation: toastIn 250ms var(--ease) both;
+}
+
+.toast svg { width: 16px; height: 16px; color: var(--accent-text); flex: 0 0 auto; }
+.toast.leaving { animation: toastOut 200ms var(--ease) both; }
+
+@keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(6px); } }
+
 /* ---------- Empty states ---------- */
 .empty-state {
   display: flex;
@@ -253,6 +286,11 @@ body.dark .skeleton::after {
 
 /* ---------- Ações da linha ---------- */
 .actions { display: flex; gap: 6px; }
+
+/* Ações discretas em repouso, elevadas no hover/foco da linha */
+.data-table tbody tr .actions { opacity: 0.6; transition: opacity var(--dur) var(--ease); }
+.data-table tbody tr:hover .actions,
+.data-table tbody tr:focus-within .actions { opacity: 1; }
 
 .action-btn {
   width: 30px;

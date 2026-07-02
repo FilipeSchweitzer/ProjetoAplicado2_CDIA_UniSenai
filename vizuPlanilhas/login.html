@@ -30,7 +30,10 @@
       animation: cardIn .28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes cardIn { from { opacity: 0; transform: scale(0.98) translateY(8px); } to { opacity: 1; transform: none; } }
-    @media (prefers-reduced-motion: reduce) { .login-card { animation: none; } }
+    /* Saída suave antes do redirect (<=200ms, ease-out, GPU-only) */
+    .login-card.leaving { animation: cardOut 180ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes cardOut { to { opacity: 0; transform: scale(0.98); } }
+    @media (prefers-reduced-motion: reduce) { .login-card, .login-card.leaving { animation: none; } }
     .brand { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 4px; }
     .brand img { width: 36px; height: 36px; object-fit: contain; }
     .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--heading); }
@@ -54,6 +57,13 @@
     button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
     button:disabled { opacity: .6; cursor: default; }
     input:focus-visible { outline: none; }
+    .btn-spinner {
+      display: inline-block; width: 13px; height: 13px; margin-right: 8px;
+      vertical-align: -2px; border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, .4); border-top-color: #fff;
+      animation: spin 700ms linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .error {
       display: none; margin-top: 14px; padding: 9px 12px; font-size: 0.84rem;
       color: #b42318; background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px;
@@ -109,11 +119,16 @@
       });
     }
 
+    function restaurarBotao() {
+      btn.disabled = false;
+      btn.textContent = "Entrar";
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       errorEl.classList.remove("show");
       btn.disabled = true;
-      btn.textContent = "Verificando...";
+      btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>Verificando...';
 
       const usuario = document.getElementById("usuario").value.trim();
       const senha = document.getElementById("senha").value;
@@ -127,16 +142,17 @@
         if (ok) {
           sessionStorage.setItem("datamol-auth", "1");
           sessionStorage.setItem("datamol-user", usuario);
-          window.location.href = "animacao.html";
+          // Fade do card antes do redirect (respeita reduced-motion)
+          const reduz = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          form.classList.add("leaving");
+          setTimeout(() => { window.location.href = "animacao.html"; }, reduz ? 0 : 180);
         } else {
           showError("Usuário ou senha incorretos.");
-          btn.disabled = false;
-          btn.textContent = "Entrar";
+          restaurarBotao();
         }
       } catch (err) {
         showError("Não foi possível validar o login. Abra o site por um servidor (não pelo arquivo direto).");
-        btn.disabled = false;
-        btn.textContent = "Entrar";
+        restaurarBotao();
       }
     });
   </script>

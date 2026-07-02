@@ -126,5 +126,33 @@
     return rowsToObjects(rows);
   }
 
-  global.DM = { cleanValue, escapeHTML, debounce, parseCSV, parseCSVAsync };
+  // Toast de confirmação: entra por translateY+opacity (<=250ms, ease-out)
+  // e some sozinho em 3s. Container com aria-live para leitores de tela.
+  function showToast(message) {
+    let container = document.getElementById("toastContainer");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toastContainer";
+      container.className = "toast-container";
+      container.setAttribute("role", "status");
+      container.setAttribute("aria-live", "polite");
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>' +
+      "<span>" + escapeHTML(message) + "</span>";
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add("leaving");
+      toast.addEventListener("animationend", () => toast.remove(), { once: true });
+      // Com reduced-motion a animação de saída não dispara: remove direto.
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
+  }
+
+  global.DM = { cleanValue, escapeHTML, debounce, parseCSV, parseCSVAsync, showToast };
 })(window);

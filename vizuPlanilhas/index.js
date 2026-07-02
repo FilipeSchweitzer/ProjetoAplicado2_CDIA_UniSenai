@@ -3,7 +3,7 @@ const API_BASE = "http://localhost:5000";
 const API_SOURCE = "__api__";
 
 // Utilitários compartilhados (vizuPlanilhas/utils.js)
-const { cleanValue, escapeHTML, debounce } = window.DM;
+const { cleanValue, escapeHTML, debounce, showToast } = window.DM;
 
 const CSV_SOURCES = {
   "../codigoPlanilhas/final_integrado_com_hmdb.csv": "final_integrado_com_hmdb.csv",
@@ -37,6 +37,7 @@ const ATOMIC_WEIGHTS = {
 
 let molecules = [];
 let selectedMoleculeId = null;
+let statsAnimated = false; // contagem animada só no primeiro load (delight)
 
 const state = {
   search: "",
@@ -271,11 +272,21 @@ function renderStats() {
   const sourceName = CSV_SOURCES[state.sourcePath] || state.sourcePath;
   const uniqueFormulas = new Set(molecules.map(m => m.formula).filter(formula => formula && formula !== "Sem fórmula")).size;
   const average = averageScore(molecules);
+  const favorites = molecules.filter(m => m.favorite).length;
+  const fmtInt = value => Math.round(value).toLocaleString("pt-BR");
 
-  els.statTotal.textContent = molecules.length.toLocaleString("pt-BR");
-  els.statUnique.textContent = uniqueFormulas.toLocaleString("pt-BR");
-  els.statFavorites.textContent = molecules.filter(m => m.favorite).length.toLocaleString("pt-BR");
-  els.statRefs.textContent = formatScore(average);
+  if (!statsAnimated && molecules.length) {
+    statsAnimated = true;
+    animateCount(els.statTotal, molecules.length, fmtInt);
+    animateCount(els.statUnique, uniqueFormulas, fmtInt);
+    animateCount(els.statFavorites, favorites, fmtInt);
+    animateCount(els.statRefs, average, formatScore);
+  } else {
+    els.statTotal.textContent = fmtInt(molecules.length);
+    els.statUnique.textContent = fmtInt(uniqueFormulas);
+    els.statFavorites.textContent = fmtInt(favorites);
+    els.statRefs.textContent = formatScore(average);
+  }
 
   els.statTotalDelta.textContent = sourceName;
   els.statUniqueDelta.textContent = `${molecules.filter(m => Number.isFinite(m.weight)).length.toLocaleString("pt-BR")} com peso calculado`;
@@ -464,6 +475,7 @@ function handleTableClick(e) {
     renderStats();
     renderTable();
     if (selectedMoleculeId === mol.uid) renderSelected(mol);
+    if (mol.favorite) showToast("Molécula adicionada aos favoritos.");
     return;
   }
 
@@ -541,6 +553,7 @@ function exportCSV() {
   a.download = "moleculas_datamol.csv";
   a.click();
   URL.revokeObjectURL(url);
+  showToast(`${filtered.length.toLocaleString("pt-BR")} registro(s) exportado(s) em CSV.`);
 }
 
 function setLoadingState(message) {
