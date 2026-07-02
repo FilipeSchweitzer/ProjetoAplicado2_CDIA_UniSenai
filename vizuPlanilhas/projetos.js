@@ -24,6 +24,7 @@ let projetos = [];
 let usuarios = [];
 let dashboardRows = null;   // carregado sob demanda
 let projetoAberto = null;   // id do projeto em detalhe
+let ultimosHits = [];       // resultados da última busca do picker (delegação)
 
 /* ---------------- Persistência ---------------- */
 function carregarProjetos() {
@@ -37,41 +38,9 @@ function novoId() {
   return "p" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
 }
 
-/* ---------------- CSV util ---------------- */
-const NULL_TOKENS = new Set(["", "nan", "null", "none", "-", "na", "undefined"]);
-function limpar(v) {
-  if (v === undefined || v === null) return "";
-  const t = String(v).trim();
-  return NULL_TOKENS.has(t.toLowerCase()) ? "" : t;
-}
-function parseCSV(text) {
-  const rows = [];
-  let row = [], value = "", inQ = false;
-  const src = text.replace(/^﻿/, "");
-  for (let i = 0; i < src.length; i++) {
-    const c = src[i], n = src[i + 1];
-    if (c === '"') { if (inQ && n === '"') { value += '"'; i++; } else inQ = !inQ; continue; }
-    if (c === "," && !inQ) { row.push(value); value = ""; continue; }
-    if ((c === "\n" || c === "\r") && !inQ) {
-      if (c === "\r" && n === "\n") i++;
-      row.push(value);
-      if (row.some(x => x.trim())) rows.push(row);
-      row = []; value = ""; continue;
-    }
-    value += c;
-  }
-  if (value || row.length) { row.push(value); if (row.some(x => x.trim())) rows.push(row); }
-  if (!rows.length) return [];
-  const headers = rows[0].map(h => h.trim());
-  return rows.slice(1).map(cells => {
-    const o = {};
-    headers.forEach((h, i) => { o[h] = (cells[i] || "").trim(); });
-    return o;
-  });
-}
-function escapeHTML(v) {
-  return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
+/* ---------------- CSV util (compartilhado em utils.js) ---------------- */
+const { cleanValue: limpar, escapeHTML, debounce, parseCSV } = window.DM;
+
 function primeiro(row, chaves) {
   for (const k of chaves) { if (row[k] !== undefined && limpar(row[k])) return limpar(row[k]); }
   return "";
@@ -265,7 +234,6 @@ function renderLista() {
         <p>Você ainda não tem projetos.<br>Crie o primeiro para organizar suas análises moleculares.</p>
         <button class="btn btn-primary" data-new-project>+ Novo projeto</button>
       </div>`;
-    grid.querySelector("[data-new-project]").addEventListener("click", abrirModal);
     return;
   }
   grid.innerHTML = projetos.map(p => `
@@ -278,12 +246,6 @@ function renderLista() {
       </div>
     </article>
   `).join("");
-  grid.querySelectorAll("[data-open]").forEach(c => {
-    c.addEventListener("click", () => abrirProjeto(c.dataset.open));
-    c.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirProjeto(c.dataset.open); }
-    });
-  });
 }
 
 /* ---- Modal novo projeto ---- */
@@ -354,11 +316,6 @@ function renderMoleculasProjeto() {
       </tr>
     `).join("")
     : '<tr><td colspan="6" class="empty-row">Nenhuma molécula neste projeto ainda.</td></tr>';
-  tb.querySelectorAll("[data-rem]").forEach(b =>
-    b.addEventListener("click", () => {
-      p.moleculas.splice(Number(b.dataset.rem), 1);
-      salvarProjetos(); renderMoleculasProjeto();
-    }));
 }
 
 function jaTem(p, m) {
@@ -389,7 +346,8 @@ async function garantirDashboard() {
   if (dashboardRows) return dashboardRows;
   try {
     const r = await fetch(CSV_DASHBOARD, { cache: "no-store" });
-    dashboardRows = r.ok ? parseCSV(await r.text()) : [];
+    // O CSV da base tem ~7MB: parse em chunks para não travar a UI.
+    dashboardRows = r.ok ? await window.DM.parseCSVAsync(await r.text()) : [];
   } catch { dashboardRows = []; }
   return dashboardRows;
 }
@@ -398,19 +356,17 @@ async function buscarNoDashboard(termo) {
   const rows = await garantirDashboard();
   const q = termo.trim().toLowerCase();
   const box = el("pickerResults");
-  if (!q) { box.innerHTML = '<div class="picker-row"><small>Digite para buscar moléculas do dashboard.</small></div>'; return; }
-  const hits = rows.filter(m => {
+  if (!q) { ultimosHits = []; box.innerHTML = '<div class="picker-row"><small>Digite para buscar moléculas do dashboard.</small></div>'; return; }
+  ultimosHits = rows.filter(m => {
     const s = [m["Description"], m["Formula"], m["Compound ID"], m["InChIKey"]].join(" ").toLowerCase();
     return s.includes(q);
   }).slice(0, 50);
-  box.innerHTML = hits.length ? hits.map((m, i) => `
+  box.innerHTML = ultimosHits.length ? ultimosHits.map((m, i) => `
     <div class="picker-row">
       <div><span class="mol-name">${escapeHTML(molNome(m))}</span><br><small>${escapeHTML(limpar(m["Formula"]) || "—")} · ${escapeHTML(molId(m))}</small></div>
       <button class="mini-add" data-idx="${i}">Adicionar</button>
     </div>`).join("")
     : '<div class="picker-row"><small>Nenhuma molécula encontrada.</small></div>';
-  box.querySelectorAll("[data-idx]").forEach(b =>
-    b.addEventListener("click", () => { adicionarMolecula(hits[Number(b.dataset.idx)]); b.textContent = "Adicionada ✓"; b.disabled = true; }));
 }
 
 /* ---- Upload CSV ---- */
@@ -466,8 +422,38 @@ function bind() {
   el("tabDashboard").addEventListener("click", () => ativarAba("dashboard"));
   el("tabUpload").addEventListener("click", () => ativarAba("upload"));
 
-  let t;
-  el("molSearch").addEventListener("input", e => { clearTimeout(t); const v = e.target.value; t = setTimeout(() => buscarNoDashboard(v), 250); });
+  // Delegação única por container (sobrevive aos re-renders)
+  el("projGrid").addEventListener("click", e => {
+    if (e.target.closest("[data-new-project]")) { abrirModal(); return; }
+    const card = e.target.closest("[data-open]");
+    if (card) abrirProjeto(card.dataset.open);
+  });
+  el("projGrid").addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const card = e.target.closest("[data-open]");
+    if (card) { e.preventDefault(); abrirProjeto(card.dataset.open); }
+  });
+
+  el("projMolBody").addEventListener("click", e => {
+    const btn = e.target.closest("[data-rem]");
+    if (!btn) return;
+    const p = projetoAtual();
+    if (!p) return;
+    p.moleculas.splice(Number(btn.dataset.rem), 1);
+    salvarProjetos(); renderMoleculasProjeto();
+  });
+
+  el("pickerResults").addEventListener("click", e => {
+    const btn = e.target.closest("[data-idx]");
+    if (!btn || btn.disabled) return;
+    const hit = ultimosHits[Number(btn.dataset.idx)];
+    if (!hit) return;
+    adicionarMolecula(hit);
+    btn.textContent = "Adicionada ✓";
+    btn.disabled = true;
+  });
+
+  el("molSearch").addEventListener("input", debounce(e => buscarNoDashboard(e.target.value), 250));
 
   const dz = el("dropzone"), fi = el("fileInput");
   dz.addEventListener("click", () => fi.click());

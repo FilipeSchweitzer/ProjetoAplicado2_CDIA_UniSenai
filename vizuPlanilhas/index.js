@@ -2,6 +2,9 @@
 const API_BASE = "http://localhost:5000";
 const API_SOURCE = "__api__";
 
+// Utilitários compartilhados (vizuPlanilhas/utils.js)
+const { cleanValue, escapeHTML, debounce } = window.DM;
+
 const CSV_SOURCES = {
   "../codigoPlanilhas/final_integrado_com_hmdb.csv": "final_integrado_com_hmdb.csv",
   [API_SOURCE]: "PostgreSQL (API)",
@@ -102,21 +105,6 @@ const SKELETON_ROW = `
     <td><span class="skeleton sk-actions"></span></td>
   </tr>`;
 
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function cleanValue(value) {
-  const text = String(value ?? "").trim();
-  if (!text || ["nan", "null", "undefined", "-"].includes(text.toLowerCase())) return "";
-  return text;
-}
-
 function toNumber(value) {
   const normalized = cleanValue(value).replace(",", ".");
   const parsed = Number(normalized);
@@ -129,61 +117,6 @@ function firstValue(row, keys) {
     if (value) return value;
   }
   return "";
-}
-
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let value = "";
-  let insideQuotes = false;
-  const source = text.replace(/^\uFEFF/, "");
-
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i];
-    const next = source[i + 1];
-
-    if (char === '"') {
-      if (insideQuotes && next === '"') {
-        value += '"';
-        i++;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-      continue;
-    }
-
-    if (char === "," && !insideQuotes) {
-      row.push(value);
-      value = "";
-      continue;
-    }
-
-    if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (char === "\r" && next === "\n") i++;
-      row.push(value);
-      if (row.some(cell => cleanValue(cell))) rows.push(row);
-      row = [];
-      value = "";
-      continue;
-    }
-
-    value += char;
-  }
-
-  if (value || row.length) {
-    row.push(value);
-    if (row.some(cell => cleanValue(cell))) rows.push(row);
-  }
-
-  if (!rows.length) return [];
-  const headers = rows[0].map(header => cleanValue(header));
-  return rows.slice(1).map((cells) => {
-    const entry = {};
-    headers.forEach((header, index) => {
-      entry[header] = cleanValue(cells[index]);
-    });
-    return entry;
-  });
 }
 
 function calculateMolecularWeight(formula) {
@@ -489,7 +422,6 @@ function renderTable() {
     : "Nenhum resultado encontrado";
 
   renderPagination(totalPages);
-  attachRowEvents();
 }
 
 function renderPagination(totalPages) {
@@ -514,29 +446,30 @@ function renderPagination(totalPages) {
   els.nextPage.disabled = state.page === totalPages;
 }
 
-function attachRowEvents() {
-  document.querySelectorAll("[data-view]").forEach((btn) => {
-    btn.addEventListener("click", () => setSelectedById(btn.dataset.view));
-  });
+// Delegação única no tbody (mesmo padrão da paginação): sobrevive a
+// qualquer re-render sem re-vincular listeners linha a linha.
+function handleTableClick(e) {
+  const viewBtn = e.target.closest("[data-view]");
+  if (viewBtn) {
+    setSelectedById(viewBtn.dataset.view);
+    return;
+  }
 
-  document.querySelectorAll("[data-fav]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const mol = molecules.find(m => m.uid === btn.dataset.fav);
-      if (!mol) return;
-      mol.favorite = !mol.favorite;
-      renderStats();
-      renderTable();
-      if (selectedMoleculeId === mol.uid) renderSelected(mol);
-    });
-  });
+  const favBtn = e.target.closest("[data-fav]");
+  if (favBtn) {
+    const mol = molecules.find(m => m.uid === favBtn.dataset.fav);
+    if (!mol) return;
+    mol.favorite = !mol.favorite;
+    renderStats();
+    renderTable();
+    if (selectedMoleculeId === mol.uid) renderSelected(mol);
+    return;
+  }
 
-  document.querySelectorAll("[data-action='clear-filters']").forEach((btn) => {
-    btn.addEventListener("click", clearFilters);
-  });
-
-  document.querySelectorAll("[data-action='reload']").forEach((btn) => {
-    btn.addEventListener("click", () => loadCSV(els.dataSourceSelect.value));
-  });
+  const action = e.target.closest("[data-action]");
+  if (!action) return;
+  if (action.dataset.action === "clear-filters") clearFilters();
+  if (action.dataset.action === "reload") loadCSV(els.dataSourceSelect.value);
 }
 
 function applyFiltersFromInputs() {
@@ -642,7 +575,8 @@ async function loadCSV(path = state.sourcePath) {
       const response = await fetch(path, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
-      rows = parseCSV(text);
+      // Parse em chunks: não bloqueia a UI (o skeleton segue animando).
+      rows = await window.DM.parseCSVAsync(text);
     }
     molecules = rows.map(createMolecule).filter(mol => mol.name || mol.formula);
 
@@ -666,7 +600,6 @@ async function loadCSV(path = state.sourcePath) {
         </td>
       </tr>
     `;
-    attachRowEvents();
     els.resultCount.textContent = "0 registros";
     els.paginationInfo.textContent = "Erro ao carregar a base";
     els.dataSourceStatus.textContent = `Erro ao carregar ${CSV_SOURCES[path] || path}: ${error.message}`;
@@ -681,11 +614,16 @@ function toggleTheme() {
 }
 
 function bindEvents() {
-  els.searchInput.addEventListener("input", () => {
+  // Debounce de 200ms: com 37 mil registros, re-renderizar a cada tecla
+  // desperdiça trabalho — só filtra quando o usuário pausa a digitação.
+  const onSearch = debounce(() => {
     state.search = els.searchInput.value;
     state.page = 1;
     renderTable();
-  });
+  }, 200);
+  els.searchInput.addEventListener("input", onSearch);
+
+  els.tableBody.addEventListener("click", handleTableClick);
 
   els.dataSourceSelect.addEventListener("change", () => {
     loadCSV(els.dataSourceSelect.value);
