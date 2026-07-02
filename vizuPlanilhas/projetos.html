@@ -22,6 +22,7 @@
     // Segue o tema definido no dashboard (persistido em localStorage).
     if (localStorage.getItem("datamol-theme") === "dark") document.body.classList.add("dark");
   </script>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <div class="app">
     <aside class="sidebar">
       <div>
@@ -43,13 +44,13 @@
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="conteudo" tabindex="-1">
       <!-- LISTA DE PROJETOS -->
       <section id="viewList">
         <div class="page-header">
           <div>
             <h2>Projetos</h2>
-            <p id="listStatus">Seus projetos de análise molecular.</p>
+            <p id="listStatus" aria-live="polite">Seus projetos de análise molecular.</p>
           </div>
           <button id="newProjectBtn" class="btn btn-primary">+ Novo projeto</button>
         </div>
@@ -75,7 +76,7 @@
 
         <!-- Aba: do dashboard -->
         <div class="panel pane" id="paneDashboard">
-          <input id="molSearch" class="mol-search" type="text" placeholder="Buscar molécula por nome, fórmula ou ID..." />
+          <input id="molSearch" class="mol-search" type="text" placeholder="Buscar molécula por nome, fórmula ou ID..." aria-label="Buscar molécula por nome, fórmula ou ID" />
           <div class="picker-results" id="pickerResults"></div>
         </div>
 
@@ -88,7 +89,7 @@
           </div>
           <div class="progress-wrap hidden" id="progressWrap">
             <div class="progress-bar"><span id="progressFill"></span></div>
-            <div class="progress-label" id="progressLabel"></div>
+            <div class="progress-label" id="progressLabel" aria-live="polite"></div>
           </div>
         </div>
 
@@ -96,12 +97,13 @@
         <div class="panel" style="margin-top:16px;">
           <div class="panel-header">
             <h3>Moléculas do projeto</h3>
-            <span id="molCount" class="muted">0 moléculas</span>
+            <span id="molCount" class="muted" aria-live="polite">0 moléculas</span>
           </div>
           <div class="table-wrap">
             <table class="data-table">
+              <caption class="sr-only">Moléculas adicionadas a este projeto, com identificador, nome, fórmula, score, natureza e ação de remoção.</caption>
               <thead>
-                <tr><th>ID</th><th>Nome / descrição</th><th>Fórmula</th><th class="num">Score</th><th>Natureza</th><th></th></tr>
+                <tr><th scope="col">ID</th><th scope="col">Nome / descrição</th><th scope="col">Fórmula</th><th scope="col" class="num">Score</th><th scope="col">Natureza</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
               </thead>
               <tbody id="projMolBody"></tbody>
             </table>
@@ -113,10 +115,10 @@
 
   <!-- MODAL NOVO PROJETO -->
   <div class="modal-backdrop" id="modalBackdrop">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head">
-        <h3>Novo projeto</h3>
-        <button class="icon-x" id="modalClose">×</button>
+        <h3 id="modalTitle">Novo projeto</h3>
+        <button class="icon-x" id="modalClose" aria-label="Fechar">×</button>
       </div>
       <div class="modal-body">
         <div class="field">

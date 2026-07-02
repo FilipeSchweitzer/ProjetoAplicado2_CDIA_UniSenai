@@ -22,6 +22,7 @@
     // Aplica o tema salvo antes da primeira pintura (evita flash de tema errado).
     if (localStorage.getItem("datamol-theme") === "dark") document.body.classList.add("dark");
   </script>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <div class="app">
     <aside class="sidebar">
       <div>
@@ -47,11 +48,11 @@
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="conteudo" tabindex="-1">
       <header class="topbar">
         <div class="search-box">
           <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-          <input id="searchInput" type="text" placeholder="Buscar molécula, fórmula, ID, fonte ou amostra..." />
+          <input id="searchInput" type="text" placeholder="Buscar molécula, fórmula, ID, fonte ou amostra..." aria-label="Buscar molécula, fórmula, ID, fonte ou amostra" />
         </div>
 
         <div class="topbar-actions">
@@ -70,7 +71,7 @@
       <section class="page-header">
         <div>
           <h2>Moléculas</h2>
-          <p id="dataSourceStatus">Carregando base molecular...</p>
+          <p id="dataSourceStatus" aria-live="polite">Carregando base molecular...</p>
         </div>
       </section>
 
@@ -118,7 +119,7 @@
             <div class="panel-header">
               <div>
                 <h3>Lista de Moléculas</h3>
-                <span id="resultCount" class="muted">0 registros</span>
+                <span id="resultCount" class="muted" aria-live="polite">0 registros</span>
               </div>
 
               <div class="panel-actions">
@@ -129,13 +130,14 @@
 
             <div class="table-wrap">
               <table class="data-table">
+                <caption class="sr-only">Lista de moléculas carregadas da base, com identificador, nome, fórmula, score e ações de visualização e favorito.</caption>
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Nome / descrição</th>
-                    <th>Fórmula</th>
-                    <th class="num">Score</th>
-                    <th>Ações</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Nome / descrição</th>
+                    <th scope="col">Fórmula</th>
+                    <th scope="col" class="num">Score</th>
+                    <th scope="col">Ações</th>
                   </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>

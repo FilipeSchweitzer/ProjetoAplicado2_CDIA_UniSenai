@@ -436,8 +436,9 @@ function renderPagination(totalPages) {
   }
 
   for (let i = start; i <= end; i++) {
+    const active = i === state.page;
     pages.push(`
-      <button class="page-number ${i === state.page ? "active" : ""}" data-page="${i}">${i}</button>
+      <button class="page-number ${active ? "active" : ""}" data-page="${i}" aria-label="Página ${i}"${active ? ' aria-current="page"' : ""}>${i}</button>
     `);
   }
 

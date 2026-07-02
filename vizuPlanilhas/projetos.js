@@ -248,8 +248,27 @@ function renderLista() {
   `).join("");
 }
 
-/* ---- Modal novo projeto ---- */
+/* ---- Modal novo projeto (focus trap + Esc + devolução de foco) ---- */
+let focoAnterior = null;
+
+function modalKeydown(e) {
+  if (e.key === "Escape") { fecharModal(); return; }
+  if (e.key !== "Tab") return;
+  const focaveis = el("modalBackdrop").querySelectorAll("button, input, textarea, [tabindex]:not([tabindex='-1'])");
+  if (!focaveis.length) return;
+  const primeiro = focaveis[0];
+  const ultimo = focaveis[focaveis.length - 1];
+  if (e.shiftKey && document.activeElement === primeiro) {
+    e.preventDefault();
+    ultimo.focus();
+  } else if (!e.shiftKey && document.activeElement === ultimo) {
+    e.preventDefault();
+    primeiro.focus();
+  }
+}
+
 function abrirModal() {
+  focoAnterior = document.activeElement;
   el("projTitle").value = "";
   el("projDesc").value = "";
   el("collabList").innerHTML = usuarios.length
@@ -262,8 +281,16 @@ function abrirModal() {
     cb.addEventListener("change", () => opt.classList.toggle("checked", cb.checked));
   });
   el("modalBackdrop").classList.add("open");
+  document.addEventListener("keydown", modalKeydown);
+  el("projTitle").focus();
 }
-function fecharModal() { el("modalBackdrop").classList.remove("open"); }
+
+function fecharModal() {
+  el("modalBackdrop").classList.remove("open");
+  document.removeEventListener("keydown", modalKeydown);
+  if (focoAnterior && typeof focoAnterior.focus === "function") focoAnterior.focus();
+  focoAnterior = null;
+}
 
 function salvarNovoProjeto() {
   const titulo = el("projTitle").value.trim();
