@@ -79,6 +79,8 @@ const els = {
   selectedMeta: document.getElementById("selectedMeta"),
   moleculeImage: document.getElementById("moleculeImage"),
   moleculePlaceholder: document.getElementById("moleculePlaceholder"),
+  molSkeleton: document.getElementById("molSkeleton"),
+  molSpinner: document.getElementById("molSpinner"),
   pubchemLink: document.getElementById("pubchemLink"),
   themeToggle: document.getElementById("themeToggle"),
   filterQuickBtn: document.getElementById("filterQuickBtn")
@@ -86,8 +88,19 @@ const els = {
 
 const ICON = {
   view: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
-  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9L12 3Z"/></svg>'
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9L12 3Z"/></svg>',
+  searchOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="m8.5 8.5 5 5M13.5 8.5l-5 5"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
 };
+
+const SKELETON_ROW = `
+  <tr>
+    <td><span class="skeleton sk-w-75"></span></td>
+    <td><span class="skeleton sk-line sk-w-90"></span><span class="skeleton sk-line sk-w-45"></span></td>
+    <td><span class="skeleton sk-w-60"></span></td>
+    <td class="num"><span class="skeleton sk-w-45"></span></td>
+    <td><span class="skeleton sk-actions"></span></td>
+  </tr>`;
 
 function escapeHTML(value) {
   return String(value ?? "")
@@ -367,20 +380,30 @@ function loadMoleculeImage(mol) {
   const candidates = mol ? getPubChemImageCandidates(mol) : [];
   let index = 0;
 
+  els.molSkeleton.hidden = true;
+  els.molSpinner.hidden = true;
   els.moleculeImage.hidden = true;
   els.moleculeImage.removeAttribute("src");
-  els.moleculePlaceholder.hidden = false;
-  els.moleculePlaceholder.textContent = mol
-    ? "Carregando estrutura 2D pelo PubChem..."
-    : "Selecione uma molécula para carregar a estrutura 2D pelo PubChem.";
 
-  if (!mol || !candidates.length) {
+  if (!mol) {
+    els.moleculePlaceholder.hidden = false;
+    els.moleculePlaceholder.textContent = "Selecione uma molécula para carregar a estrutura 2D pelo PubChem.";
+    return;
+  }
+
+  if (!candidates.length) {
+    els.moleculePlaceholder.hidden = false;
     els.moleculePlaceholder.textContent = "Esta molécula não possui identificador suficiente para buscar a imagem 2D.";
     return;
   }
 
+  // Enquanto o PubChem responde, mostra só o spinner.
+  els.moleculePlaceholder.hidden = true;
+  els.molSpinner.hidden = false;
+
   const tryNextImage = () => {
     if (index >= candidates.length) {
+      els.molSpinner.hidden = true;
       els.moleculeImage.hidden = true;
       els.moleculePlaceholder.hidden = false;
       els.moleculePlaceholder.textContent = "Não foi possível localizar a estrutura 2D no PubChem para este registro.";
@@ -389,6 +412,7 @@ function loadMoleculeImage(mol) {
 
     els.moleculeImage.hidden = true;
     els.moleculeImage.onload = () => {
+      els.molSpinner.hidden = true;
       els.moleculePlaceholder.hidden = true;
       els.moleculeImage.hidden = false;
     };
@@ -431,6 +455,17 @@ function renderTable() {
   const start = (state.page - 1) * state.pageSize;
   const paged = filtered.slice(start, start + state.pageSize);
 
+  const emptyState = `
+    <tr>
+      <td colspan="5">
+        <div class="empty-state">
+          ${ICON.searchOff}
+          <p>Nenhum registro encontrado com os filtros atuais.</p>
+          <button class="btn btn-ghost" data-action="clear-filters">Limpar filtros</button>
+        </div>
+      </td>
+    </tr>`;
+
   els.tableBody.innerHTML = paged.length
     ? paged.map((mol) => `
       <tr>
@@ -446,7 +481,7 @@ function renderTable() {
         </td>
       </tr>
     `).join("")
-    : `<tr><td colspan="5" class="empty-row">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
+    : emptyState;
 
   els.resultCount.textContent = `${total.toLocaleString("pt-BR")} registros`;
   els.paginationInfo.textContent = total
@@ -493,6 +528,14 @@ function attachRowEvents() {
       renderTable();
       if (selectedMoleculeId === mol.uid) renderSelected(mol);
     });
+  });
+
+  document.querySelectorAll("[data-action='clear-filters']").forEach((btn) => {
+    btn.addEventListener("click", clearFilters);
+  });
+
+  document.querySelectorAll("[data-action='reload']").forEach((btn) => {
+    btn.addEventListener("click", () => loadCSV(els.dataSourceSelect.value));
   });
 }
 
@@ -568,9 +611,18 @@ function exportCSV() {
 
 function setLoadingState(message) {
   els.dataSourceStatus.textContent = message;
-  els.tableBody.innerHTML = `<tr><td colspan="5" class="loading-row">${escapeHTML(message)}</td></tr>`;
+  els.tableBody.innerHTML = SKELETON_ROW.repeat(state.pageSize);
   els.resultCount.textContent = "Carregando...";
   els.paginationInfo.textContent = "Aguarde o carregamento do CSV";
+
+  [els.statTotal, els.statUnique, els.statFavorites, els.statRefs].forEach((stat) => {
+    stat.innerHTML = '<span class="skeleton sk-stat"></span>';
+  });
+
+  els.moleculeImage.hidden = true;
+  els.moleculePlaceholder.hidden = true;
+  els.molSpinner.hidden = true;
+  els.molSkeleton.hidden = false;
 }
 
 async function loadCSV(path = state.sourcePath) {
@@ -605,11 +657,16 @@ async function loadCSV(path = state.sourcePath) {
     renderSelected(null);
     els.tableBody.innerHTML = `
       <tr>
-        <td colspan="5" class="empty-row">
-          Não foi possível carregar os dados. Para o CSV, sirva o projeto por um servidor local (ex.: python -m http.server). Para a API, rode criarBanco/api.py em ${API_BASE}.
+        <td colspan="5">
+          <div class="empty-state">
+            ${ICON.alert}
+            <p>Não foi possível carregar os dados. Para o CSV, sirva o projeto por um servidor local (ex.: python -m http.server). Para a API, rode criarBanco/api.py em ${API_BASE}.</p>
+            <button class="btn btn-outline" data-action="reload">Tentar novamente</button>
+          </div>
         </td>
       </tr>
     `;
+    attachRowEvents();
     els.resultCount.textContent = "0 registros";
     els.paginationInfo.textContent = "Erro ao carregar a base";
     els.dataSourceStatus.textContent = `Erro ao carregar ${CSV_SOURCES[path] || path}: ${error.message}`;

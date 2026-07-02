@@ -18,6 +18,7 @@ const ICON_X = `<svg ${SVG}><path d="M18 6 6 18M6 6l12 12"/></svg>`;
 const ICON_USER = `<svg ${SVG}><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-5.2 7-5.2s7 1.7 7 5.2"/></svg>`;
 const ICON_MOL = `<svg ${SVG}><circle cx="7" cy="7" r="2.3"/><circle cx="17" cy="10" r="2.3"/><circle cx="10.5" cy="17" r="2.3"/><path d="M9 8 15 9.4M8.4 9.2 9.6 14.9M12.2 15.6 15.4 11.7"/></svg>`;
 const ICON_TEAM = `<svg ${SVG}><circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3.1 2.5-4.7 5.5-4.7s5.5 1.6 5.5 4.7"/><path d="M16 5.3a3 3 0 0 1 0 5.7M20.5 20c0-2.4-1.3-3.9-3.3-4.5"/></svg>`;
+const ICON_FOLDER_PLUS = `<svg ${SVG}><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6M9 13h6"/></svg>`;
 
 let projetos = [];
 let usuarios = [];
@@ -258,7 +259,13 @@ function renderLista() {
     ? projetos.length + (projetos.length === 1 ? " projeto" : " projetos")
     : "Nenhum projeto ainda. Crie o primeiro.";
   if (!projetos.length) {
-    grid.innerHTML = '<div class="proj-empty">Você ainda não tem projetos.<br>Clique em <strong>“+ Novo projeto”</strong> para começar.</div>';
+    grid.innerHTML = `
+      <div class="proj-empty">
+        ${ICON_FOLDER_PLUS}
+        <p>Você ainda não tem projetos.<br>Crie o primeiro para organizar suas análises moleculares.</p>
+        <button class="btn btn-primary" data-new-project>+ Novo projeto</button>
+      </div>`;
+    grid.querySelector("[data-new-project]").addEventListener("click", abrirModal);
     return;
   }
   grid.innerHTML = projetos.map(p => `
