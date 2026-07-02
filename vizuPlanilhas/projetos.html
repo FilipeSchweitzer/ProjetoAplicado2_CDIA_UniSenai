@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataMol · Projetos</title>
+  <script>
+    // Guard de login: sem sessão válida, volta para o login.
+    if (sessionStorage.getItem("datamol-auth") !== "1") {
+      window.location.replace("login.html");
+    }
+  </script>
+  <link rel="stylesheet" href="index.css" />
+  <link rel="stylesheet" href="componentes.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* --- Projetos (escopo local) --- */
+    .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .proj-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 16px; box-shadow: var(--shadow-sm); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .proj-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+    .proj-card h3 { margin: 0 0 6px; font-size: 1rem; font-weight: 650; color: var(--heading); }
+    .proj-card p { margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .proj-meta { display: flex; gap: 14px; margin-top: 12px; color: var(--faint); font-size: .78rem; }
+    .proj-meta span { display: inline-flex; align-items: center; gap: 6px; }
+    .proj-meta svg { width: 14px; height: 14px; }
+    .chip svg { width: 13px; height: 13px; }
+    .proj-empty { color: var(--muted); padding: 40px; text-align: center; border: 1px dashed var(--border);
+      border-radius: var(--radius-lg); background: var(--surface); }
+
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+      background: var(--accent-weak); color: var(--accent-text); font-size: .78rem; font-weight: 600; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,20,30,.45); display: none;
+      align-items: flex-start; justify-content: center; z-index: 100; overflow-y: auto; padding: 40px 16px; }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      width: 100%; max-width: 560px; box-shadow: 0 20px 60px rgba(15,20,30,.25); }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+    .modal-head h3 { margin: 0; font-size: 1.05rem; font-weight: 650; color: var(--heading); }
+    .modal-body { padding: 20px; }
+    .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--border); }
+    .icon-x { background: none; border: 0; font-size: 1.3rem; color: var(--muted); cursor: pointer; line-height: 1; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: .82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .field input, .field textarea {
+      width: 100%; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      border-radius: 8px; padding: 9px 12px; outline: none; font-size: .9rem; font-family: inherit;
+    }
+    .field textarea { resize: vertical; min-height: 72px; }
+    .field input:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+    .collab-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .collab-opt { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer; font-size: .86rem; user-select: none; }
+    .collab-opt input { width: auto; }
+    .collab-opt.checked { border-color: var(--accent); background: var(--accent-weak); color: var(--accent-text); }
+
+    /* Detalhe do projeto */
+    .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+    .add-tabs { display: flex; gap: 6px; margin: 16px 0 12px; }
+    .add-tabs button { border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+      padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: .85rem; font-weight: 500; }
+    .add-tabs button.active { background: var(--accent); color: #fff; border-color: transparent; }
+
+    .dropzone { border: 1px dashed var(--border-strong); border-radius: var(--radius); padding: 26px; text-align: center;
+      color: var(--muted); font-size: .88rem; background: var(--surface-2); cursor: pointer; }
+    .dropzone.drag { border-color: var(--accent); background: var(--accent-weak); }
+    .progress-wrap { margin-top: 14px; }
+    .progress-bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+    .progress-bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s ease; }
+    .progress-label { font-size: .8rem; color: var(--muted); margin-top: 6px; }
+
+    .picker-results { max-height: 230px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
+    .picker-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px;
+      border-bottom: 1px solid var(--border); font-size: .85rem; }
+    .picker-row:last-child { border-bottom: 0; }
+    .picker-row .mol-name { font-weight: 600; color: var(--heading); }
+    .picker-row small { color: var(--muted); }
+    .mini-add { border: 1px solid var(--border); background: var(--surface); color: var(--accent-text);
+      border-radius: 7px; padding: 5px 10px; cursor: pointer; font-size: .8rem; font-weight: 600; }
+    .back-link { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: .85rem; font-weight: 500; padding: 0; margin-bottom: 6px; }
+    .back-link:hover { color: var(--text); }
+    .hidden { display: none !important; }
+
+    /* --- Interações táteis + foco + movimento (Emil Kowalski) --- */
+    .proj-card { transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+    .proj-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .proj-card:active { transform: scale(0.995); }
+    .proj-card:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+    .add-tabs button { transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+    .add-tabs button:hover:not(.active) { background: var(--surface-2); color: var(--text); }
+    .add-tabs button:active { transform: scale(0.97); }
+    .add-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+    .mini-add { transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+    .mini-add:hover { background: var(--surface-2); }
+    .mini-add:active { transform: scale(0.94); }
+    .mini-add:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+    .collab-opt { transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease); }
+    .collab-opt:hover { border-color: var(--border-strong); }
+    .collab-opt:active { transform: scale(0.98); }
+
+    .dropzone { transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+    .dropzone:hover { border-color: var(--accent); background: var(--accent-weak); }
+
+    .back-link, .icon-x { border-radius: 6px; transition: color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+    .back-link:hover { color: var(--text); }
+    .back-link:focus-visible, .icon-x:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+    .icon-x:hover { color: var(--text); }
+    .icon-x:active { transform: scale(0.9); }
+
+    /* Entrada do modal: scale 0.96 -> 1 + fade, ease-out, <=220ms.
+       Usa animation (não transition) para disparar de forma confiável ao sair de display:none. */
+    .modal-backdrop.open .modal { animation: modalIn var(--dur-modal) var(--ease); }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+    .modal-backdrop.open { animation: backdropIn var(--dur-modal) var(--ease); }
+    @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Transições de view (lista <-> detalhe), abas e entrada dos cards */
+    @keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    #viewList:not(.hidden), #viewDetail:not(.hidden) { animation: viewIn 260ms var(--ease); }
+    #paneDashboard:not(.hidden), #paneUpload:not(.hidden) { animation: fadeIn 180ms var(--ease); }
+    .proj-card { animation: fadeIn 280ms var(--ease) both; }
+    .proj-grid .proj-card:nth-child(2) { animation-delay: 45ms; }
+    .proj-grid .proj-card:nth-child(3) { animation-delay: 90ms; }
+    .proj-grid .proj-card:nth-child(4) { animation-delay: 135ms; }
+    .proj-grid .proj-card:nth-child(n+5) { animation-delay: 170ms; }
+    /* linhas da tabela do projeto entram suavemente */
+    #projMolBody tr { animation: fadeIn 220ms var(--ease) both; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .proj-card:hover { transform: none; }
+      .modal-backdrop.open .modal, .modal-backdrop.open { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // Segue o tema definido no dashboard (persistido em localStorage).
+    if (localStorage.getItem("datamol-theme") === "dark") document.body.classList.add("dark");
+  </script>
+  <div class="app">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon" style="width:30px;height:30px;background:transparent;border-radius:8px;padding:0;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;">
+            <img src="datamol-icon.png" alt="Ícone DataMol" style="width:100%;height:100%;object-fit:contain;display:block;" />
+          </div>
+          <div class="brand-text"><h1>DataMol</h1></div>
+        </div>
+        <nav class="menu">
+          <a class="menu-item" href="main.html">Dashboard</a>
+          <a class="menu-item active" href="projetos.html">Projetos</a>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <p>Projeto Aplicado 2</p>
+        <span>Base CSV conectada</span>
+        <button class="logout-btn" onclick="sessionStorage.removeItem('datamol-auth');window.location.replace('login.html')">Sair</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- LISTA DE PROJETOS -->
+      <section id="viewList">
+        <div class="page-header">
+          <div>
+            <h2>Projetos</h2>
+            <p id="listStatus">Seus projetos de análise molecular.</p>
+          </div>
+          <button id="newProjectBtn" class="btn btn-primary">+ Novo projeto</button>
+        </div>
+        <div id="projGrid" class="proj-grid"></div>
+      </section>
+
+      <!-- DETALHE DO PROJETO -->
+      <section id="viewDetail" class="hidden">
+        <button class="back-link" id="backBtn">← Voltar aos projetos</button>
+        <div class="page-header detail-head">
+          <div>
+            <h2 id="detailTitle">Projeto</h2>
+            <p id="detailDesc"></p>
+            <div class="chip-list" id="detailCollabs" style="margin-top:10px;"></div>
+          </div>
+          <button id="deleteProjectBtn" class="btn btn-outline">Excluir projeto</button>
+        </div>
+
+        <div class="add-tabs">
+          <button id="tabDashboard" class="active">Adicionar do dashboard</button>
+          <button id="tabUpload">Enviar CSV</button>
+        </div>
+
+        <!-- Aba: do dashboard -->
+        <div class="panel" id="paneDashboard" style="padding:16px 18px;">
+          <input id="molSearch" type="text" placeholder="Buscar molécula por nome, fórmula ou ID..." style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;outline:none;background:var(--surface);color:var(--text);font-size:.9rem;" />
+          <div class="picker-results" id="pickerResults"></div>
+        </div>
+
+        <!-- Aba: upload CSV -->
+        <div class="panel hidden" id="paneUpload" style="padding:16px 18px;">
+          <div class="dropzone" id="dropzone">
+            Arraste um CSV aqui ou <strong>clique para escolher</strong>.<br>
+            <small>As moléculas serão enriquecidas (PubChem/ChEMBL/HMDB/FooDB) no mesmo padrão do dashboard.</small>
+            <input type="file" id="fileInput" accept=".csv,text/csv" hidden />
+          </div>
+          <div class="progress-wrap hidden" id="progressWrap">
+            <div class="progress-bar"><span id="progressFill"></span></div>
+            <div class="progress-label" id="progressLabel"></div>
+          </div>
+        </div>
+
+        <!-- Moléculas do projeto -->
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-header">
+            <h3>Moléculas do projeto</h3>
+            <span id="molCount" class="muted">0 moléculas</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>ID</th><th>Nome / descrição</th><th>Fórmula</th><th class="num">Score</th><th>Natureza</th><th></th></tr>
+              </thead>
+              <tbody id="projMolBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL NOVO PROJETO -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Novo projeto</h3>
+        <button class="icon-x" id="modalClose">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="projTitle">Título</label>
+          <input id="projTitle" type="text" placeholder="Ex.: Triagem de peptídeos" />
+        </div>
+        <div class="field">
+          <label for="projDesc">Descrição</label>
+          <textarea id="projDesc" placeholder="Objetivo do projeto, contexto, etc."></textarea>
+        </div>
+        <div class="field">
+          <label>Colaboradores</label>
+          <div class="collab-list" id="collabList"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" id="cancelProject">Cancelar</button>
+        <button class="btn btn-primary" id="saveProject">Criar projeto</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="projetos.js"></script>
+</body>
+</html>

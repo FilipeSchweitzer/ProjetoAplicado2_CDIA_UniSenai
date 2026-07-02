@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataMol · Entrar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7f9; --surface: #fff; --text: #1f2937; --heading: #0b0d12;
+      --muted: #6b7280; --border: #e7e9ee; --accent: #0e9f6e; --accent-hover: #0b8a5f;
+      --ring: rgba(14,159,110,.28);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      display: grid; place-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .login-card {
+      width: 100%; max-width: 380px; margin: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px 28px;
+      box-shadow: 0 1px 3px rgba(17,24,39,.06), 0 10px 30px rgba(17,24,39,.05);
+      animation: cardIn .28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes cardIn { from { opacity: 0; transform: scale(0.98) translateY(8px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .login-card { animation: none; } }
+    .brand { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 4px; }
+    .brand img { width: 36px; height: 36px; object-fit: contain; }
+    .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; color: var(--heading); }
+    .subtitle { text-align: center; color: var(--muted); font-size: 0.88rem; margin: 6px 0 24px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .field { margin-bottom: 16px; }
+    input {
+      width: 100%; padding: 10px 12px; font-size: 0.92rem;
+      border: 1px solid var(--border); border-radius: 8px;
+      background: var(--surface); color: var(--text); outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+    button {
+      width: 100%; margin-top: 6px; padding: 11px; font-size: 0.92rem; font-weight: 600;
+      color: #fff; background: var(--accent); border: 0; border-radius: 8px; cursor: pointer;
+      transition: background .15s ease, transform .15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .15s ease;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:active { transform: scale(0.97); }
+    button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+    button:disabled { opacity: .6; cursor: default; }
+    input:focus-visible { outline: none; }
+    .error {
+      display: none; margin-top: 14px; padding: 9px 12px; font-size: 0.84rem;
+      color: #b42318; background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px;
+    }
+    .error.show { display: block; }
+    .hint { text-align: center; color: var(--muted); font-size: 0.76rem; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <form class="login-card" id="loginForm" autocomplete="on">
+    <div class="brand">
+      <img src="datamol-icon.png" alt="DataMol" />
+      <h1>DataMol</h1>
+    </div>
+    <p class="subtitle">Acesso restrito · Projeto Aplicado 2</p>
+
+    <div class="field">
+      <label for="usuario">Usuário</label>
+      <input id="usuario" name="usuario" type="text" required autofocus />
+    </div>
+
+    <div class="field">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" required />
+    </div>
+
+    <button type="submit" id="submitBtn">Entrar</button>
+
+    <div class="error" id="error"></div>
+    <p class="hint">Use as credenciais fornecidas pelo IST.</p>
+  </form>
+
+  <script>
+    // ATENÇÃO: login provisório, validado no cliente contra usuarios.csv.
+    // NÃO é seguro (o CSV é público). Serve apenas para demonstração.
+    const form = document.getElementById("loginForm");
+    const errorEl = document.getElementById("error");
+    const btn = document.getElementById("submitBtn");
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.add("show");
+    }
+
+    function parseCSV(text) {
+      const linhas = text.replace(/^﻿/, "").trim().split(/\r?\n/);
+      const header = linhas.shift().split(",").map(h => h.trim().toLowerCase());
+      const iUser = header.indexOf("usuario");
+      const iPass = header.indexOf("senha");
+      return linhas.map(l => {
+        const cols = l.split(",");
+        return { usuario: (cols[iUser] || "").trim(), senha: (cols[iPass] || "").trim() };
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.classList.remove("show");
+      btn.disabled = true;
+      btn.textContent = "Verificando...";
+
+      const usuario = document.getElementById("usuario").value.trim();
+      const senha = document.getElementById("senha").value;
+
+      try {
+        const resp = await fetch("usuarios.csv", { cache: "no-store" });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const usuarios = parseCSV(await resp.text());
+        const ok = usuarios.some(u => u.usuario === usuario && u.senha === senha);
+
+        if (ok) {
+          sessionStorage.setItem("datamol-auth", "1");
+          sessionStorage.setItem("datamol-user", usuario);
+          window.location.href = "animacao.html";
+        } else {
+          showError("Usuário ou senha incorretos.");
+          btn.disabled = false;
+          btn.textContent = "Entrar";
+        }
+      } catch (err) {
+        showError("Não foi possível validar o login. Abra o site por um servidor (não pelo arquivo direto).");
+        btn.disabled = false;
+        btn.textContent = "Entrar";
+      }
+    });
+  </script>
+</body>
+</html>
