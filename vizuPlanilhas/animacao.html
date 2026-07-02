@@ -4,42 +4,170 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DataMol</title>
+  <link rel="icon" type="image/svg+xml" href="datamol-icon.svg" />
   <script>
     // Guard de login: sem sessão válida, volta para o login.
     if (sessionStorage.getItem("datamol-auth") !== "1") {
       window.location.replace("login.html");
     }
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
-      font-family: "Inter", system-ui, -apple-system, sans-serif; }
-    /* A animação roda dentro de um iframe isolado. Deixamos o iframe um pouco
-       mais alto que a tela e cortamos o excedente embaixo (overflow:hidden no
-       wrapper) para esconder a barra de controles do player, que fica no rodapé. */
-    #wrap { position: fixed; inset: 0; overflow: hidden; background: #000; }
-    #anim { position: absolute; top: 0; left: 0; width: 100%;
-      height: calc(100% + 64px); border: 0; display: block; }
+    :root {
+      --stage-bg: #fafbfc;
+      --wordmark: #17996a;
+      --tagline: #6b7280;
+      --skip-border: rgba(17, 24, 39, 0.14);
+      --skip-bg: rgba(255, 255, 255, 0.7);
+      --skip-text: #4b5563;
+      --skip-hover: rgba(243, 244, 246, 0.95);
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-move: cubic-bezier(0.65, 0, 0.35, 1);
+    }
+    body.dark {
+      --stage-bg: #0a0b0d;
+      --wordmark: #34d399;
+      --tagline: #969ca6;
+      --skip-border: rgba(255, 255, 255, 0.18);
+      --skip-bg: rgba(20, 22, 25, 0.7);
+      --skip-text: #b6bac2;
+      --skip-hover: rgba(35, 38, 44, 0.95);
+    }
+    html, body {
+      margin: 0; height: 100%; overflow: hidden;
+      background: var(--stage-bg);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+    }
+    .stage {
+      position: fixed; inset: 0;
+      display: grid; place-items: center;
+      animation: sceneOut 500ms var(--ease) 7050ms forwards;
+    }
+    .stage svg { width: min(88vw, 760px); height: auto; display: block; }
+
+    /* Traços desenham via stroke-dashoffset (pathLength normalizado) */
+    .edge {
+      stroke-dasharray: 1;
+      animation: draw 800ms var(--ease-move) both;
+      animation-delay: var(--d, 0ms);
+    }
+    /* Nós entram com scale + opacity (GPU-only) */
+    .node {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pop 600ms var(--ease) both;
+      animation-delay: var(--d, 0ms);
+    }
+    .dot {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: drift 700ms var(--ease) both;
+      animation-delay: var(--d, 0ms);
+    }
+    .wordmark, .tagline {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: fadeUp 550ms var(--ease) both;
+    }
+    .wordmark { animation-delay: 4900ms; }
+    .tagline { animation-delay: 5250ms; }
+
+    @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes pop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: none; } }
+    @keyframes drift { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes sceneOut { to { opacity: 0; transform: scale(1.02); } }
+
     #skip {
       position: fixed; top: 16px; right: 18px; z-index: 10;
-      border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.45);
-      color: #fff; border-radius: 8px; padding: 8px 14px;
+      border: 1px solid var(--skip-border); background: var(--skip-bg);
+      color: var(--skip-text); border-radius: 8px; padding: 8px 14px;
       font: 600 13px "Inter", system-ui, sans-serif; cursor: pointer;
-      transition: background .15s ease;
+      transition: background 150ms var(--ease), transform 150ms var(--ease), box-shadow 150ms var(--ease);
     }
-    #skip:hover { background: rgba(0,0,0,.72); }
+    #skip:hover { background: var(--skip-hover); }
+    #skip:active { transform: scale(0.97); }
+    #skip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--stage-bg), 0 0 0 4px rgba(14, 159, 110, 0.35); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stage, .edge, .node, .dot, .wordmark, .tagline { animation: none; }
+      .edge { stroke-dashoffset: 0; }
+    }
   </style>
 </head>
 <body>
-  <div id="wrap">
-    <iframe id="anim" src="datamol-anim.html" title="Animação DataMol" scrolling="no"></iframe>
+  <script>
+    // Segue o tema definido no dashboard (persistido em localStorage).
+    if (localStorage.getItem("datamol-theme") === "dark") document.body.classList.add("dark");
+  </script>
+
+  <div class="stage">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Animação de abertura do DataMol">
+      <defs>
+        <linearGradient id="dm-g" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#0e9f6e"/>
+          <stop offset="1" stop-color="#43b863"/>
+        </linearGradient>
+      </defs>
+      <g transform="translate(600 330)">
+        <g stroke="url(#dm-g)" stroke-width="9" stroke-linecap="round" fill="none">
+          <line class="edge" pathLength="1" style="--d:250ms"  x1="0"    y1="-150" x2="130"  y2="-75"/>
+          <line class="edge" pathLength="1" style="--d:380ms"  x1="130"  y1="-75"  x2="130"  y2="75"/>
+          <line class="edge" pathLength="1" style="--d:510ms"  x1="130"  y1="75"   x2="0"    y2="150"/>
+          <line class="edge" pathLength="1" style="--d:640ms"  x1="0"    y1="150"  x2="-130" y2="75"/>
+          <line class="edge" pathLength="1" style="--d:770ms"  x1="-130" y1="75"   x2="-130" y2="-75"/>
+          <line class="edge" pathLength="1" style="--d:900ms"  x1="-130" y1="-75"  x2="0"    y2="-150"/>
+
+          <line class="edge" pathLength="1" style="--d:1500ms" x1="0"    y1="-150" x2="0" y2="0"/>
+          <line class="edge" pathLength="1" style="--d:1620ms" x1="130"  y1="-75"  x2="0" y2="0"/>
+          <line class="edge" pathLength="1" style="--d:1740ms" x1="130"  y1="75"   x2="0" y2="0"/>
+          <line class="edge" pathLength="1" style="--d:1860ms" x1="0"    y1="150"  x2="0" y2="0"/>
+          <line class="edge" pathLength="1" style="--d:1980ms" x1="-130" y1="75"   x2="0" y2="0"/>
+          <line class="edge" pathLength="1" style="--d:2100ms" x1="-130" y1="-75"  x2="0" y2="0"/>
+
+          <line class="edge" pathLength="1" style="--d:3000ms" x1="130" y1="-75"  x2="250" y2="-30"/>
+          <line class="edge" pathLength="1" style="--d:3150ms" x1="130" y1="75"   x2="250" y2="-30"/>
+          <line class="edge" pathLength="1" style="--d:3600ms" x1="250" y1="-30"  x2="300" y2="40"/>
+          <line class="edge" pathLength="1" style="--d:3700ms" x1="250" y1="-30"  x2="320" y2="-90"/>
+        </g>
+        <g fill="url(#dm-g)">
+          <circle class="node" style="--d:150ms"  cx="0"    cy="-150" r="26"/>
+          <circle class="node" style="--d:300ms"  cx="130"  cy="-75"  r="20"/>
+          <circle class="node" style="--d:450ms"  cx="130"  cy="75"   r="20"/>
+          <circle class="node" style="--d:600ms"  cx="0"    cy="150"  r="26"/>
+          <circle class="node" style="--d:750ms"  cx="-130" cy="75"   r="22"/>
+          <circle class="node" style="--d:900ms"  cx="-130" cy="-75"  r="22"/>
+
+          <circle class="node" style="--d:2100ms" cx="0" cy="0" r="24"/>
+
+          <circle class="node" style="--d:2500ms" cx="65"  cy="-37.5" r="11"/>
+          <circle class="node" style="--d:2620ms" cx="-65" cy="-37.5" r="11"/>
+          <circle class="node" style="--d:2740ms" cx="0"   cy="75"    r="11"/>
+
+          <circle class="node" style="--d:3400ms" cx="250" cy="-30" r="17"/>
+          <circle class="node" style="--d:3900ms" cx="300" cy="40"  r="10"/>
+          <circle class="node" style="--d:4000ms" cx="320" cy="-90" r="8"/>
+          <circle class="dot"  style="--d:4200ms" cx="345" cy="-20" r="6"/>
+          <circle class="dot"  style="--d:4350ms" cx="335" cy="70"  r="5"/>
+        </g>
+      </g>
+      <text class="wordmark" x="600" y="640" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="120" letter-spacing="-3" fill="var(--wordmark)">DataMol</text>
+      <text class="tagline" x="600" y="700" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="600" font-size="26" letter-spacing="2" fill="var(--tagline)">ANÁLISE MOLECULAR INTEGRADA</text>
+    </svg>
   </div>
+
   <button id="skip" type="button">Pular →</button>
 
   <script>
     function irParaDashboard() { window.location.replace("main.html"); }
     document.getElementById("skip").addEventListener("click", irParaDashboard);
-    // A animação dura ~7s; redireciona logo após o fim.
-    setTimeout(irParaDashboard, 7600);
+
+    // A animação dura ~7s; com reduced-motion a cena já entra completa,
+    // então o redirect acontece bem antes.
+    var reduz = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(irParaDashboard, reduz ? 2200 : 7600);
   </script>
 </body>
 </html>

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DataMol</title>
+  <title>DataMol · Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="datamol-icon.svg" />
   <script>
     // Guard de login (provisório). Sem sessão válida, volta para a tela de login.
     if (sessionStorage.getItem("datamol-auth") !== "1") {
@@ -22,7 +23,7 @@
       <div>
         <div class="brand">
           <div class="brand-icon" style="width:30px;height:30px;background:transparent;border-radius:8px;padding:0;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;">
-            <img src="datamol-icon.png" alt="Ícone DataMol" style="width:100%;height:100%;object-fit:contain;display:block;" />
+            <img src="datamol-icon.svg" alt="Ícone DataMol" width="30" height="30" style="width:100%;height:100%;object-fit:contain;display:block;" />
           </div>
           <div class="brand-text">
             <h1>DataMol</h1>
@@ -216,6 +217,6 @@
     </main>
   </div>
 
-  <script src="index.js"></script>
+  <script src="index.js" defer></script>
 </body>
 </html>
