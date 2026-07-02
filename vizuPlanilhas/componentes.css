@@ -88,9 +88,31 @@
 }
 
 /* ---------- Tabela ---------- */
+/* Sombras de rolagem (Lea Verou): as coberturas rolam com o conteúdo
+   (attachment: local) e revelam as sombras fixas quando há overflow. */
 .table-wrap {
   padding: 0 18px 4px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left center,
+    linear-gradient(to left, var(--surface) 30%, transparent) right center,
+    radial-gradient(farthest-side at 0 50%, rgba(17, 24, 39, 0.16), transparent) left center,
+    radial-gradient(farthest-side at 100% 50%, rgba(17, 24, 39, 0.16), transparent) right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+body.dark .table-wrap {
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left center,
+    linear-gradient(to left, var(--surface) 30%, transparent) right center,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.6), transparent) left center,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.6), transparent) right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 .data-table {
@@ -584,4 +606,9 @@ body.dark .skeleton::after {
 @media (prefers-reduced-motion: reduce) {
   .proj-card:hover { transform: none; }
   .modal-backdrop.open .modal, .modal-backdrop.open { animation: none; }
+}
+
+/* ---------- Responsivo (regras de componentes deste arquivo) ---------- */
+@media (max-width: 620px) {
+  .filter-grid { grid-template-columns: 1fr; }
 }
