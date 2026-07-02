@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataMol</title>
+  <script>
+    // Guard de login: sem sessão válida, volta para o login.
+    if (sessionStorage.getItem("datamol-auth") !== "1") {
+      window.location.replace("login.html");
+    }
+  </script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+      font-family: "Inter", system-ui, -apple-system, sans-serif; }
+    /* A animação roda dentro de um iframe isolado. Deixamos o iframe um pouco
+       mais alto que a tela e cortamos o excedente embaixo (overflow:hidden no
+       wrapper) para esconder a barra de controles do player, que fica no rodapé. */
+    #wrap { position: fixed; inset: 0; overflow: hidden; background: #000; }
+    #anim { position: absolute; top: 0; left: 0; width: 100%;
+      height: calc(100% + 64px); border: 0; display: block; }
+    #skip {
+      position: fixed; top: 16px; right: 18px; z-index: 10;
+      border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.45);
+      color: #fff; border-radius: 8px; padding: 8px 14px;
+      font: 600 13px "Inter", system-ui, sans-serif; cursor: pointer;
+      transition: background .15s ease;
+    }
+    #skip:hover { background: rgba(0,0,0,.72); }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <iframe id="anim" src="datamol-anim.html" title="Animação DataMol" scrolling="no"></iframe>
+  </div>
+  <button id="skip" type="button">Pular →</button>
+
+  <script>
+    function irParaDashboard() { window.location.replace("main.html"); }
+    document.getElementById("skip").addEventListener("click", irParaDashboard);
+    // A animação dura ~7s; redireciona logo após o fim.
+    setTimeout(irParaDashboard, 7600);
+  </script>
+</body>
+</html>

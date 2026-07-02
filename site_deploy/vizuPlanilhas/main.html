@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DataMol</title>
-  <script>
-    // Guard de login (provisório). Sem sessão válida, volta para a tela de login.
-    if (sessionStorage.getItem("datamol-auth") !== "1") {
-      window.location.replace("login.html");
-    }
-  </script>
   <link rel="stylesheet" href="index.css" />
   <link rel="stylesheet" href="componentes.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +15,7 @@
     <aside class="sidebar">
       <div>
         <div class="brand">
-          <div class="brand-icon" style="width:30px;height:30px;background:transparent;border-radius:8px;padding:0;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;">
+          <div class="brand-icon" style="width:48px;height:48px;background:transparent;border-radius:14px;padding:0;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;">
             <img src="datamol-icon.png" alt="Ícone DataMol" style="width:100%;height:100%;object-fit:contain;display:block;" />
           </div>
           <div class="brand-text">
@@ -30,22 +24,24 @@
         </div>
 
         <nav class="menu">
-          <a class="menu-item active" href="main.html">Dashboard</a>
-          <a class="menu-item" href="projetos.html">Projetos</a>
+          <a class="menu-item active" href="#">Dashboard</a>
+          <a class="menu-item" href="#">Moléculas</a>
+          <a class="menu-item" href="#">Visualização 2D</a>
+          <a class="menu-item" href="#">Filtros</a>
+          <a class="menu-item" href="#">Relatórios</a>
         </nav>
       </div>
 
       <div class="sidebar-footer">
         <p>Projeto Aplicado 2</p>
         <span>Base CSV conectada</span>
-        <button class="logout-btn" onclick="sessionStorage.removeItem('datamol-auth');window.location.replace('login.html')">Sair</button>
       </div>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <div class="search-box">
-          <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <span class="search-icon">⌕</span>
           <input id="searchInput" type="text" placeholder="Buscar molécula, fórmula, ID, fonte ou amostra..." />
         </div>
 
@@ -68,7 +64,7 @@
 
       <section class="stats-grid">
         <article class="stat-card stat-green">
-          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+          <div class="stat-icon">Σ</div>
           <div class="stat-content">
             <span>Total de registros</span>
             <strong id="statTotal">0</strong>
@@ -77,7 +73,7 @@
         </article>
 
         <article class="stat-card stat-blue">
-          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></div>
+          <div class="stat-icon">ƒ</div>
           <div class="stat-content">
             <span>Fórmulas únicas</span>
             <strong id="statUnique">0</strong>
@@ -86,7 +82,7 @@
         </article>
 
         <article class="stat-card stat-green">
-          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9L12 3Z"/></svg></div>
+          <div class="stat-icon">★</div>
           <div class="stat-content">
             <span>Favoritos</span>
             <strong id="statFavorites">0</strong>
@@ -95,7 +91,7 @@
         </article>
 
         <article class="stat-card stat-blue">
-          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+          <div class="stat-icon">%</div>
           <div class="stat-content">
             <span>Score médio</span>
             <strong id="statRefs">0</strong>
@@ -126,7 +122,8 @@
                     <th>ID</th>
                     <th>Nome / descrição</th>
                     <th>Fórmula</th>
-                    <th class="num">Score</th>
+                    <th>Peso estimado</th>
+                    <th>Score</th>
                     <th>Ações</th>
                   </tr>
                 </thead>

@@ -84,13 +84,6 @@ const els = {
   filterQuickBtn: document.getElementById("filterQuickBtn")
 };
 
-const ICON = {
-  view: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
-  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.1l1-5.8L3.5 9.2l5.9-.9L12 3Z"/></svg>',
-  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
-  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>'
-};
-
 function escapeHTML(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -249,23 +242,6 @@ function averageScore(list) {
   const scores = list.map(mol => mol.score).filter(Number.isFinite);
   if (!scores.length) return 0;
   return scores.reduce((sum, score) => sum + score, 0) / scores.length;
-}
-
-// Anima um número do valor atual até o alvo (easeOutCubic). Respeita reduced-motion.
-function animateCount(elm, target, formatFn) {
-  if (!elm) return;
-  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const from = typeof elm._val === "number" ? elm._val : 0;
-  elm._val = target;
-  if (reduce || from === target) { elm.textContent = formatFn(target); return; }
-  const dur = 650, start = performance.now();
-  function step(now) {
-    const t = Math.min(1, (now - start) / dur);
-    const eased = 1 - Math.pow(1 - t, 3);
-    elm.textContent = formatFn(from + (target - from) * eased);
-    if (t < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
 }
 
 function getFilteredMolecules() {
@@ -439,16 +415,17 @@ function renderTable() {
         <td>${escapeHTML(mol.id)}</td>
         <td><strong>${escapeHTML(mol.name)}</strong><span class="row-subtitle">${escapeHTML(mol.subcategory)}</span></td>
         <td>${escapeHTML(mol.formula)}</td>
-        <td class="num">${escapeHTML(formatScore(mol.score))}</td>
+        <td>${escapeHTML(formatWeight(mol.weight))}</td>
+        <td><span class="badge ${categoryBadgeClass(mol.category)}">${escapeHTML(formatScore(mol.score))}</span></td>
         <td>
           <div class="actions">
-            <button class="action-btn view" data-view="${escapeHTML(mol.uid)}" title="Visualizar" aria-label="Visualizar">${ICON.view}</button>
-            <button class="action-btn fav ${mol.favorite ? "active" : ""}" data-fav="${escapeHTML(mol.uid)}" title="Favoritar" aria-label="Favoritar">${ICON.star}</button>
+            <button class="action-btn view" data-view="${escapeHTML(mol.uid)}" title="Visualizar">👁</button>
+            <button class="action-btn fav ${mol.favorite ? "active" : ""}" data-fav="${escapeHTML(mol.uid)}" title="Favoritar">★</button>
           </div>
         </td>
       </tr>
     `).join("")
-    : `<tr><td colspan="5" class="empty-row">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
+    : `<tr><td colspan="6" class="empty-row">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
 
   els.resultCount.textContent = `${total.toLocaleString("pt-BR")} registros`;
   els.paginationInfo.textContent = total
@@ -570,7 +547,7 @@ function exportCSV() {
 
 function setLoadingState(message) {
   els.dataSourceStatus.textContent = message;
-  els.tableBody.innerHTML = `<tr><td colspan="5" class="loading-row">${escapeHTML(message)}</td></tr>`;
+  els.tableBody.innerHTML = `<tr><td colspan="6" class="loading-row">${escapeHTML(message)}</td></tr>`;
   els.resultCount.textContent = "Carregando...";
   els.paginationInfo.textContent = "Aguarde o carregamento do CSV";
 }
@@ -607,7 +584,7 @@ async function loadCSV(path = state.sourcePath) {
     renderSelected(null);
     els.tableBody.innerHTML = `
       <tr>
-        <td colspan="5" class="empty-row">
+        <td colspan="6" class="empty-row">
           Não foi possível carregar os dados. Para o CSV, sirva o projeto por um servidor local (ex.: python -m http.server). Para a API, rode criarBanco/api.py em ${API_BASE}.
         </td>
       </tr>
@@ -622,14 +599,14 @@ function toggleTheme() {
   document.body.classList.toggle("dark");
   const dark = document.body.classList.contains("dark");
   localStorage.setItem("datamol-theme", dark ? "dark" : "light");
-  els.themeToggle.innerHTML = dark ? ICON.sun : ICON.moon;
+  els.themeToggle.textContent = dark ? "☀" : "☾";
 }
 
 function initTheme() {
   const saved = localStorage.getItem("datamol-theme");
   const dark = saved === "dark";
   document.body.classList.toggle("dark", dark);
-  els.themeToggle.innerHTML = dark ? ICON.sun : ICON.moon;
+  els.themeToggle.textContent = dark ? "☀" : "☾";
 }
 
 function bindEvents() {
