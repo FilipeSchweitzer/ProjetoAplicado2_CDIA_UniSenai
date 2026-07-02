@@ -300,7 +300,18 @@
   padding: 8px 10px;
   outline: none;
   font-size: 0.86rem;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
+
+.filter-grid select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface) var(--chevron) no-repeat right 10px center / 14px;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+.filter-grid select:hover { border-color: var(--border-strong); }
 
 .filter-grid input:focus, .filter-grid select:focus {
   border-color: var(--accent);
@@ -314,3 +325,195 @@
   gap: 8px;
 }
 .range-row span { color: var(--faint); font-weight: 600; }
+
+/* ============================================================
+   Projetos (migrado do CSS embutido de projetos.html)
+   ============================================================ */
+
+/* ---------- Grid e cards de projeto ---------- */
+.proj-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.proj-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  animation: fadeIn 280ms var(--ease) both;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.proj-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow); transform: translateY(-2px); }
+.proj-card:active { transform: scale(0.995); }
+.proj-card:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+.proj-card h3 { margin: 0 0 6px; font-size: 1rem; font-weight: 650; color: var(--heading); }
+.proj-card p {
+  margin: 0; color: var(--muted); font-size: 0.85rem; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.proj-grid .proj-card:nth-child(2) { animation-delay: 45ms; }
+.proj-grid .proj-card:nth-child(3) { animation-delay: 90ms; }
+.proj-grid .proj-card:nth-child(4) { animation-delay: 135ms; }
+.proj-grid .proj-card:nth-child(n+5) { animation-delay: 170ms; }
+
+.proj-meta { display: flex; gap: 14px; margin-top: 12px; color: var(--faint); font-size: 0.78rem; }
+.proj-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.proj-meta svg { width: 14px; height: 14px; }
+
+.proj-empty {
+  color: var(--muted); padding: 40px; text-align: center;
+  border: 1px dashed var(--border); border-radius: var(--radius-lg); background: var(--surface);
+}
+
+/* ---------- Chips ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border-radius: 999px; background: var(--accent-weak); color: var(--accent-text);
+  font-size: 0.78rem; font-weight: 600;
+}
+.chip svg { width: 13px; height: 13px; }
+.chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.detail-head .chip-list { margin-top: 10px; }
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15, 20, 30, 0.45);
+  display: none; align-items: flex-start; justify-content: center;
+  z-index: 100; overflow-y: auto; padding: 40px 16px;
+}
+.modal-backdrop.open { display: flex; animation: backdropIn var(--dur-modal) var(--ease); }
+
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  width: 100%; max-width: 560px; box-shadow: 0 20px 60px rgba(15, 20, 30, 0.25);
+}
+.modal-backdrop.open .modal { animation: modalIn var(--dur-modal) var(--ease); }
+
+@keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.modal-head h3 { margin: 0; font-size: 1.05rem; font-weight: 650; color: var(--heading); }
+.modal-body { padding: 20px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--border); }
+
+.icon-x {
+  background: none; border: 0; font-size: 1.3rem; color: var(--muted);
+  cursor: pointer; line-height: 1; border-radius: 6px;
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.icon-x:hover { color: var(--text); }
+.icon-x:active { transform: scale(0.9); }
+.icon-x:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+/* ---------- Campos de formulário ---------- */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.field input, .field textarea {
+  width: 100%; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; padding: 9px 12px; outline: none; font-size: 0.9rem; font-family: inherit;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.field textarea { resize: vertical; min-height: 72px; }
+.field input:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+.collab-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.collab-opt {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px;
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+  font-size: 0.86rem; user-select: none;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.collab-opt input { width: auto; }
+.collab-opt:hover { border-color: var(--border-strong); }
+.collab-opt:active { transform: scale(0.98); }
+.collab-opt.checked { border-color: var(--accent); background: var(--accent-weak); color: var(--accent-text); }
+
+/* ---------- Detalhe do projeto ---------- */
+.detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+
+.pane { padding: 16px 18px; }
+
+.mol-search {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+  outline: none; background: var(--surface); color: var(--text); font-size: 0.9rem;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.mol-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+.add-tabs { display: flex; gap: 6px; margin: 16px 0 12px; }
+.add-tabs button {
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+  padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.add-tabs button.active { background: var(--accent); color: #fff; border-color: transparent; }
+.add-tabs button:hover:not(.active) { background: var(--surface-2); color: var(--text); }
+.add-tabs button:active { transform: scale(0.97); }
+.add-tabs button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+/* ---------- Upload (dropzone + progresso) ---------- */
+.dropzone {
+  border: 1px dashed var(--border-strong); border-radius: var(--radius); padding: 26px;
+  text-align: center; color: var(--muted); font-size: 0.88rem; background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-weak); }
+
+.progress-wrap { margin-top: 14px; }
+.progress-bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+/* Preenchimento via transform (GPU-only): scaleX em vez de width */
+.progress-bar span {
+  display: block; height: 100%; width: 100%; background: var(--accent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 200ms var(--ease-move);
+}
+.progress-label { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+
+/* ---------- Picker de moléculas ---------- */
+.picker-results { max-height: 230px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 8px; }
+.picker-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+}
+.picker-row:last-child { border-bottom: 0; }
+.picker-row .mol-name { font-weight: 600; color: var(--heading); }
+.picker-row small { color: var(--muted); }
+
+.mini-add {
+  border: 1px solid var(--border); background: var(--surface); color: var(--accent-text);
+  border-radius: 7px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.mini-add:hover { background: var(--surface-2); }
+.mini-add:active { transform: scale(0.94); }
+.mini-add:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+.back-link {
+  background: none; border: 0; color: var(--muted); cursor: pointer;
+  font-size: 0.85rem; font-weight: 500; padding: 0; margin-bottom: 6px; border-radius: 6px;
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.back-link:hover { color: var(--text); }
+.back-link:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring); }
+
+.hidden { display: none !important; }
+
+/* ---------- Transições de view (lista <-> detalhe) ---------- */
+@keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+#viewList:not(.hidden), #viewDetail:not(.hidden) { animation: viewIn 260ms var(--ease); }
+#paneDashboard:not(.hidden), #paneUpload:not(.hidden) { animation: fadeIn 180ms var(--ease); }
+#projMolBody tr { animation: fadeIn 220ms var(--ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .proj-card:hover { transform: none; }
+  .modal-backdrop.open .modal, .modal-backdrop.open { animation: none; }
+}

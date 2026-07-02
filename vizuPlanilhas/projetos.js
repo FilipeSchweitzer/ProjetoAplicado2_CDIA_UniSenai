@@ -417,11 +417,11 @@ async function processarArquivo(file) {
   if (!bases.length) { alert("Não encontrei uma coluna de nome/descrição da molécula no CSV."); return; }
 
   el("progressWrap").classList.remove("hidden");
-  el("progressFill").style.width = "0%";
+  el("progressFill").style.transform = "scaleX(0)";
   el("progressLabel").textContent = "Enriquecendo 0/" + bases.length + " moléculas...";
 
   const enriquecidas = await enriquecerLote(bases, (done, total) => {
-    el("progressFill").style.width = Math.round((done / total) * 100) + "%";
+    el("progressFill").style.transform = "scaleX(" + (done / total) + ")";
     el("progressLabel").textContent = "Enriquecendo " + done + "/" + total + " moléculas...";
   });
 
