@@ -1,5 +1,23 @@
 // Endereço da API Flask (criarBanco/api.py). Ajuste se rodar em outra porta/host.
-const API_BASE = "http://localhost:5000";
+// Base da API resolvida em runtime (sem hardcode):
+//  1) ?api=<url> na URL define e PERSISTE a base (use ?api=reset para limpar);
+//  2) senão usa o valor salvo em localStorage;
+//  3) senão: localhost -> Flask em :5000; hospedado -> mesma origem (a Vercel roteia /api/*).
+const API_BASE = (function resolveApiBase() {
+  const norm = (u) => (u || "").trim().replace(/\/+$/, "");
+  try {
+    const q = new URLSearchParams(location.search).get("api");
+    if (q !== null) {
+      if (q === "" || q.toLowerCase() === "reset") localStorage.removeItem("datamol-api-base");
+      else localStorage.setItem("datamol-api-base", norm(q));
+    }
+  } catch (e) { /* sem acesso a storage/URL */ }
+  let saved = null;
+  try { saved = localStorage.getItem("datamol-api-base"); } catch (e) { /* ignore */ }
+  if (saved) return norm(saved);
+  if (["localhost", "127.0.0.1", ""].includes(location.hostname)) return "http://localhost:5000";
+  return location.origin;
+})();
 const API_SOURCE = "__api__";
 
 // Utilitários compartilhados (vizuPlanilhas/utils.js)
