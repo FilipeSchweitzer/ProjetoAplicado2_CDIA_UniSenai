@@ -10,6 +10,7 @@ Este repositório contém o código-fonte e a documentação do DATAMOL, uma fer
 - Manutenção de Idenficadores Originais
 - Lógica de Decisão Sequencial ("A Escadinha")
 - Tomada de Decisão Humana
+- Projetos Simultâneos
 
 
 ## Funcionamento
@@ -43,15 +44,14 @@ Sintético / Indefinido
 
 ## Roadmap
 
-- Additional browser support
-
-- Add more integrations
+![Screenshot](assets/roadmap.jpeg)
 
 
 ## Imagens
 
-![App Screenshot](https://dummyimage.com/468x300?text=App+Screenshot+Here)
+![Screenshot](assets/appweb_home.png)
 
+![Screenshot](assets/appweb_projetos.png)
 
 ## Rodando Local
 
@@ -71,7 +71,7 @@ Entrar no repositório
 
 Instalar dependências do pipeline
 ```bash
-  pip install pandas requests openpyxl chembl_webresource_client
+  pip install -r requirements.txt
 ```
 
 ### Backend (PostgreSQL + API)
@@ -79,15 +79,6 @@ Instalar dependências do pipeline
 Instalar dependências do backend
 ```bash
   pip install -r criarBanco/requirements.txt
-```
-
-Configurar credenciais do banco (variáveis de ambiente — PowerShell)
-```powershell
-  $env:DATAMOL_DB_NAME = "datamol"
-  $env:DATAMOL_DB_USER = "postgres"
-  $env:DATAMOL_DB_PASSWORD = "sua_senha"
-  $env:DATAMOL_DB_HOST = "localhost"
-  $env:DATAMOL_DB_PORT = "5432"
 ```
 
 Criar o esquema, as funções e popular o banco a partir do CSV
@@ -112,6 +103,6 @@ Depois abra `http://localhost:8765/vizuPlanilhas/main.html`. No seletor de fonte
 escolha o CSV ou **PostgreSQL (API)** para consumir os dados do banco.
 
 
-## Documentação
+## Documentação de viabilidade
 
-[Documentation](https://linktodocumentation)
+[Documentation](https://docs.google.com/document/d/1depbNVanvJztDRn56_X1-lhH-Po8duTh2qOkjWneBdU/edit?usp=sharing)
