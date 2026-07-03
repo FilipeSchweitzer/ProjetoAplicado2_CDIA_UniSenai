@@ -12,10 +12,17 @@ Rodar:
     pip install -r requirements.txt
     python api.py            # sobe em http://localhost:5000
 """
+import os
+import sys
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from psycopg2.extras import RealDictCursor
 
+# Garante que criarBanco/ (diretório deste arquivo) esteja no sys.path, para que
+# "from db import ..." funcione mesmo quando api.py é importado de fora da pasta
+# (ex.: build da Vercel a partir da raiz do projeto).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from db import get_connection
 
 app = Flask(__name__)

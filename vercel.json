@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "criarBanco/api.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "criarBanco/api.py"
+    }
+  ]
+}
